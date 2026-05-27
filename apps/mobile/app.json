@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "课题分离",
+    "slug": "separation-of-tasks",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "sot",
+    "splash": {
+      "backgroundColor": "#F9F8F6",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sot.cards"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F9F8F6"
+      },
+      "package": "com.sot.cards"
+    },
+    "platforms": ["ios", "android"],
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

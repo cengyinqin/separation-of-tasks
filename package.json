@@ -1,0 +1,16 @@
+{
+  "name": "separation-of-tasks",
+  "private": true,
+  "scripts": {
+    "dev:mobile": "pnpm --filter @sot/mobile dev",
+    "dev:web": "pnpm --filter @sot/web dev",
+    "build:shared": "pnpm --filter @sot/shared build",
+    "build:web": "pnpm --filter @sot/web build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

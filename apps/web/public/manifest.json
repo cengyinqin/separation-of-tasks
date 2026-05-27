@@ -1,0 +1,21 @@
+{
+  "name": "课题分离练习卡牌",
+  "short_name": "课题分离",
+  "description": "基于阿德勒心理学的每日心理觉察工具",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9F8F6",
+  "theme_color": "#F9F8F6",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
