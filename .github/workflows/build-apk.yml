@@ -43,17 +43,6 @@ jobs:
         working-directory: apps/mobile
         run: npx expo prebuild --platform android --clean
 
-      - name: Generate keystore
-        working-directory: apps/mobile/android/app
-        run: |
-          keytool -genkeypair \
-            -v -keystore debug.keystore \
-            -alias androiddebugkey \
-            -keyalg RSA -keysize 2048 -validity 365 \
-            -storepass android \
-            -keypass android \
-            -dname "CN=Android Debug,O=SOT,C=CN"
-
       - name: Build APK
         working-directory: apps/mobile/android
         run: ./gradlew assembleRelease
