@@ -11,6 +11,8 @@ out/
 
 # Expo
 .expo/
+android/
+ios/
 *.jks
 *.p8
 *.p12
