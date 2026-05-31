@@ -43,22 +43,15 @@ jobs:
         working-directory: apps/mobile
         run: npx expo prebuild --platform android --clean
 
-      - name: Configure build
-        working-directory: apps/mobile/android
-        run: |
-          sed -i 's/^reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a/' gradle.properties
-          sed -i 's/^newArchEnabled=.*/newArchEnabled=false/' gradle.properties
-          sed -i "s/rootProject.name = '.*'/rootProject.name = 'SOT'/" settings.gradle
-
       - name: Build APK
         id: build
         working-directory: apps/mobile/android
         run: |
-          export ANDROID_HOME=${ANDROID_HOME:-$ANDROID_SDK_ROOT}
-          export ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-$ANDROID_HOME}
-          echo "ANDROID_HOME=$ANDROID_HOME"
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           ./gradlew assembleDebug 2>&1 | tee build.log
+          echo "=== Build output tree ==="
+          find app/build -name "*.apk" 2>/dev/null || echo "No APK files found"
+          ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug output dir"
 
       - name: Upload build log
         if: failure()
