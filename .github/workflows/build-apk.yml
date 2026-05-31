@@ -29,7 +29,7 @@ jobs:
           java-version: '17'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: actions/setup-android@v3
         with:
           packages: 'platforms;android-35 build-tools;35.0.0'
 
@@ -48,20 +48,29 @@ jobs:
         working-directory: apps/mobile/android
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "::group::Gradle Build Output"
           ./gradlew assembleDebug 2>&1 | tee build.log
-          echo "=== Build output tree ==="
-          find app/build -name "*.apk" 2>/dev/null || echo "No APK files found"
-          ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug output dir"
-
-      - name: Upload build log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: apps/mobile/android/build.log
+          echo "::endgroup::"
+          echo "::group::APK Search"
+          APKS=$(find . -name "*.apk" 2>/dev/null)
+          if [ -n "$APKS" ]; then
+            echo "APK files found:"
+            echo "$APKS"
+            echo "::notice::APK found: $APKS"
+          else
+            echo "::warning::No APK files found in entire android directory!"
+            echo "Directory structure of build outputs:"
+            find . -type d -name "build" | head -5
+            ls -la app/build/ 2>/dev/null || echo "app/build/ does not exist"
+            ls -la app/build/outputs/ 2>/dev/null || echo "app/build/outputs/ does not exist"
+            ls -la app/build/outputs/apk/ 2>/dev/null || echo "app/build/outputs/apk/ does not exist"
+          fi
+          echo "::endgroup::"
+          echo "::group::Gradle Tasks"
+          ./gradlew tasks --all 2>&1 | grep -i "assemble\|bundle\|apk\|package" | head -20
+          echo "::endgroup::"
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: sot-debug-apk
