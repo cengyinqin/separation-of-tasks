@@ -68,18 +68,19 @@ jobs:
         id: build
         working-directory: apps/mobile/android
         run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
           ./gradlew :app:assembleDebug --no-build-cache 2>&1 | tee build.log
           GRADLE_EXIT=${PIPESTATUS[0]}
-          echo "::notice::Gradle exit code: $GRADLE_EXIT"
+          echo "::notice::Gradle exit: $GRADLE_EXIT, result: $(grep 'BUILD' build.log 2>/dev/null | tail -1 || echo 'no BUILD line')"
 
-          # Show key lines from build log
-          echo "::notice::Build log BUILD line: $(grep 'BUILD' build.log 2>/dev/null | tail -1 || echo 'none')"
-          echo "::notice::Build log tasks: $(grep -oP '(?<=Task :).*' build.log 2>/dev/null | head -10 | tr '\n' ' ' || echo 'none')"
+          # Extract error/warning lines and surface as annotations
+          grep -iE "FAILED|What went wrong|error:|ERROR|Error:|Caused by|Exception" build.log 2>/dev/null | head -20 | while IFS= read -r line; do
+            echo "::warning::${line:0:200}"
+          done
 
           # Check build directory
           if [ -d app/build ]; then
-            BUILD_DIRS=$(find app/build -type d 2>/dev/null | head -20 | tr '\n' ' ')
-            echo "::notice::app/build dirs: $BUILD_DIRS"
+            echo "::notice::app/build dirs: $(find app/build -type d 2>/dev/null | head -20 | tr '\n' ' ')"
           else
             echo "::warning::app/build/ does not exist!"
           fi
@@ -88,8 +89,7 @@ jobs:
           APKS=$(find . -name "*.apk" 2>/dev/null)
           if [ -n "$APKS" ]; then
             for apk in $APKS; do
-              SIZE=$(ls -lh "$apk" | awk '{print $5}')
-              echo "::notice::APK: $apk ($SIZE)"
+              echo "::notice::APK: $apk ($(ls -lh "$apk" | awk '{print $5}'))"
             done
           else
             echo "::warning::No APK files found anywhere"
