@@ -48,26 +48,57 @@ jobs:
         working-directory: apps/mobile/android
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          echo "::group::Gradle Build Output"
-          ./gradlew assembleDebug 2>&1 | tee build.log
+
+          # Check key prerequisites
+          echo "::group::Pre-build checks"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "node version: $(node --version)"
+          echo "npm version: $(npm --version)"
+
+          # Can node find expo CLI from here?
+          NODE_TEST=$(node -e "
+            try {
+              const p = require.resolve('expo/package.json');
+              console.log('expo found at:', p);
+            } catch(e) {
+              console.log('expo NOT found:', e.message);
+            }
+            try {
+              const p = require.resolve('@expo/cli/package.json');
+              console.log('@expo/cli found at:', p);
+            } catch(e) {
+              console.log('@expo/cli NOT found:', e.message);
+            }
+          " 2>&1)
+          echo "$NODE_TEST"
           echo "::endgroup::"
-          echo "::group::APK Search"
+
+          # Run the build with explicit module target
+          echo "::group::Gradle Build"
+          ./gradlew :app:assembleDebug --no-build-cache 2>&1 | tee build.log
+          GRADLE_EXIT=${PIPESTATUS[0]}
+          echo "Gradle exit code: $GRADLE_EXIT"
+          echo "::endgroup::"
+
+          # Search for any APK
+          echo "::group::Build Results"
           APKS=$(find . -name "*.apk" 2>/dev/null)
           if [ -n "$APKS" ]; then
-            echo "APK files found:"
-            echo "$APKS"
-            echo "::notice::APK found: $APKS"
+            for apk in $APKS; do
+              SIZE=$(ls -lh "$apk" | awk '{print $5}')
+              echo "::notice::APK: $apk ($SIZE)"
+            done
           else
-            echo "::warning::No APK files found in entire android directory!"
-            echo "Directory structure of build outputs:"
-            find . -type d -name "build" | head -5
-            ls -la app/build/ 2>/dev/null || echo "app/build/ does not exist"
-            ls -la app/build/outputs/ 2>/dev/null || echo "app/build/outputs/ does not exist"
-            ls -la app/build/outputs/apk/ 2>/dev/null || echo "app/build/outputs/apk/ does not exist"
+            echo "::warning::No APK files found!"
+            echo "app/build exists: $(test -d app/build && echo yes || echo no)"
+            if [ -d app/build ]; then
+              echo "build dirs:"
+              find app/build -type d 2>/dev/null | head -20
+            fi
+            # Check gradle output for key indicators
+            echo "Key lines from build log:"
+            grep -i "BUILD\|FAILED\|error\|apk\|bundle\|warning" build.log 2>/dev/null | tail -20
           fi
-          echo "::endgroup::"
-          echo "::group::Gradle Tasks"
-          ./gradlew tasks --all 2>&1 | grep -i "assemble\|bundle\|apk\|package" | head -20
           echo "::endgroup::"
 
       - name: Upload APK
