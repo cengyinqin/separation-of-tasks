@@ -73,23 +73,22 @@ jobs:
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::Gradle exit: $GRADLE_EXIT, result: $(grep 'BUILD' build.log 2>/dev/null | tail -1 || echo 'no BUILD line')"
 
-          # Show what went wrong section from build log
-          if grep -n "What went wrong" build.log 2>/dev/null > /dev/null; then
+          # Dump entire "What went wrong" through BUILD FAILED section
+          if grep -q "What went wrong" build.log 2>/dev/null; then
             LINE=$(grep -n "What went wrong" build.log | head -1 | cut -d: -f1)
-            sed -n "${LINE},\$p" build.log | head -10 | while IFS= read -r line; do
+            sed -n "${LINE},\$p" build.log | head -40 | while IFS= read -r line; do
               echo "::warning::${line:0:250}"
             done
+          else
+            # If no "What went wrong", dump lines around BUILD FAILED
+            if grep -q "BUILD FAILED" build.log 2>/dev/null; then
+              LINE=$(grep -n "BUILD FAILED" build.log | head -1 | cut -d: -f1)
+              START=$((LINE > 30 ? LINE - 30 : 1))
+              sed -n "${START},$((LINE + 5))p" build.log | while IFS= read -r line; do
+                echo "::warning::${line:0:250}"
+              done
+            fi
           fi
-
-          # Also show any failed tasks
-          grep -n "FAILED$" build.log 2>/dev/null | head -5 | while IFS= read -r line; do
-            echo "::warning::Task failed: ${line:0:250}"
-          done
-
-          # Last 10 lines for context
-          tail -10 build.log 2>/dev/null | while IFS= read -r line; do
-            echo "::warning::log: ${line:0:250}"
-          done
 
           # Check build directory
           if [ -d app/build ]; then
